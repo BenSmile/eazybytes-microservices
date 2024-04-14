@@ -40,10 +40,26 @@ management:
     web:
       exposure:
         include: "*"
-
-
+  info:
+    env:
+      enabled: true
+  health:
+    readiness-state:
+      enabled: true
+    liveness-state:
+      enabled: true
+  endpoint:
+    health:
+      probes:
+        enabled: true
 info:
   app:
     name: cards
     description: Eazy bank cards application
     version: 1.0.0
+
+logging:
+  level:
+    com:
+      eazybytes:
+        cards: DEBUG
