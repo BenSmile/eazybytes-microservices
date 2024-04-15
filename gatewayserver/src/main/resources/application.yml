@@ -30,6 +30,7 @@ management:
     liveness-state:
       enabled: true
 
+
 info:
   app:
     name: "gatewayserver"
@@ -41,3 +42,15 @@ logging:
     com:
       bkafirongo:
         gatewayserver: DEBUG
+
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        sliding-window-size: 10
+        permitted-number-of-calls-in-half-open-state: 2
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 10000
+server:
+  error:
+    include-stacktrace: never
