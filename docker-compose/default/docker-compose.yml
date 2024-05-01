@@ -1,7 +1,18 @@
 services:
+  redis:
+    image: redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD-SHELL","redis-cli ping | grep PONG"]
+      timeout: 10s
+      retries: 10
+    extends:
+      file: common-config.yml
+      service: network-deploy-service
 
   configserver:
-    image: "benkafirongo/configserver:s9"
+    image: "benkafirongo/configserver:s10"
     container_name: configserver-ms
     ports:
       - "8071:8071"
@@ -16,7 +27,7 @@ services:
       service: microservice-base-config
 
   gatewayserver:
-    image: "benkafirongo/gatewayserver:s9"
+    image: "benkafirongo/gatewayserver:s10"
     container_name: gatewayserver-ms
     ports:
       - "8072:8072"
@@ -24,6 +35,10 @@ services:
       SPRING_APPLICATION_NAME: "gatewayserver"
       SPRING_CONFIG_IMPORT: configserver:http://configserver:8071/
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eurekaserver:8070/eureka/
+      SPRING_DATA_REDIS_CONNECT_TIMEOUT: 2s
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6279
+      SPRING_DATA_REDIS_TIMEOUT: 1s
     healthcheck:
       test: "curl --fail --silent localhost:8072/actuator/health/readiness | grep UP || exit 1"
       interval: 10s
@@ -37,12 +52,14 @@ services:
         condition: service_healthy
       loans:
         condition: service_healthy
+      redis:
+        condition: service_healthy
     extends:
       file: common-config.yml
       service: microservice-base-config
 
   eurekaserver:
-    image: "benkafirongo/eurekaserver:s9"
+    image: "benkafirongo/eurekaserver:s10"
     container_name: eurekaserver-ms
     ports:
       - "8070:8070"
@@ -62,7 +79,7 @@ services:
       service: microservice-base-config
 
   accounts:
-    image: "benkafirongo/accounts:s9"
+    image: "benkafirongo/accounts:s10"
     container_name: accounts-ms
     healthcheck:
       test: "curl --fail --silent localhost:8080/actuator/health/readiness | grep UP || exit 1"
@@ -86,7 +103,7 @@ services:
       service: microservice-configserver-config
 
   loans:
-    image: "benkafirongo/loans:s9"
+    image: "benkafirongo/loans:s10"
     container_name: loans-ms
     ports:
       - "8090:8090"
@@ -110,7 +127,7 @@ services:
       service: microservice-configserver-config
 
   cards:
-    image: "benkafirongo/cards:s9"
+    image: "benkafirongo/cards:s10"
     container_name: cards-ms
     ports:
       - "9000:9000"
