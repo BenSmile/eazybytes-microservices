@@ -92,7 +92,7 @@
 				<version>3.4.1</version>
 				<configuration>
 					<to>
-						<image>benkafirongo/${project.artifactId}:s9</image>
+						<image>benkafirongo/${project.artifactId}:s10</image>
 					</to>
 				</configuration>
 			</plugin>

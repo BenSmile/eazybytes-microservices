@@ -1,16 +1,16 @@
 package com.eazybytes.accounts.service.client;
 
 
-import com.eazybytes.accounts.dto.LoansDto;
+import com.eazybytes.accounts.dto.CardsDto;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
 @Component
-public class LoansFallback  implements LoansFeignClient{
+public class CardsFallback implements CardsFeignClient{
 
 
     @Override
-    public ResponseEntity<LoansDto> fetchLoanDetails(String correlationId, String mobileNumber) {
+    public ResponseEntity<CardsDto> fetchCardDetails(String correlationId, String mobileNumber) {
         return null;
     }
 }

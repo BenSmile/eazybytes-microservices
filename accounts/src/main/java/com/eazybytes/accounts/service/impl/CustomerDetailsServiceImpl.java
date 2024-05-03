@@ -14,18 +14,19 @@ import com.eazybytes.accounts.repository.CustomerRepository;
 import com.eazybytes.accounts.service.client.CardsFeignClient;
 import com.eazybytes.accounts.service.client.LoansFeignClient;
 import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class CustomerDetailsServiceImpl implements ICustomerService {
 
-    private AccountsRepository accountsRepository;
-    private CustomerRepository customerRepository;
-    private LoansFeignClient loansFeignClient;
-    private CardsFeignClient cardsFeignClient;
+    private final AccountsRepository accountsRepository;
+    private final CustomerRepository customerRepository;
+    private final LoansFeignClient loansFeignClient;
+    private final CardsFeignClient cardsFeignClient;
 
 
     /**
@@ -34,10 +35,10 @@ public class CustomerDetailsServiceImpl implements ICustomerService {
      */
     @Override
     public CustomerDetailsDto fetchCustomerDetails(String mobileNumber, String correlationId) {
-        Customer customer = customerRepository.findByMobileNumber(mobileNumber).orElseThrow(
+        var customer = customerRepository.findByMobileNumber(mobileNumber).orElseThrow(
                 () -> new ResourceNotFoundException("Customer", "mobileNumber", mobileNumber)
         );
-        Accounts accounts = accountsRepository.findByCustomerId(customer.getCustomerId()).orElseThrow(
+        var accounts = accountsRepository.findByCustomerId(customer.getCustomerId()).orElseThrow(
                 () -> new ResourceNotFoundException("Account", "customerId", customer.getCustomerId().toString())
         );
         CustomerDto customerDto = CustomerMapper.mapToCustomerDto(customer, new CustomerDto());
@@ -47,10 +48,12 @@ public class CustomerDetailsServiceImpl implements ICustomerService {
         customerDetailsDto.setAccountsDto(AccountsMapper.mapToAccountsDto(accounts, new AccountsDto()));
 
         var loansDtoResponseEntity = loansFeignClient.fetchLoanDetails(correlationId, mobileNumber);
-        customerDetailsDto.setLoansDto(loansDtoResponseEntity.getBody());
+        if (loansDtoResponseEntity != null)
+            customerDetailsDto.setLoansDto(loansDtoResponseEntity.getBody());
 
         var cardsDtoResponseEntity = cardsFeignClient.fetchCardDetails(correlationId, mobileNumber);
-        customerDetailsDto.setCardsDto(cardsDtoResponseEntity.getBody());
+        if (cardsDtoResponseEntity != null)
+            customerDetailsDto.setCardsDto(cardsDtoResponseEntity.getBody());
 
         return customerDetailsDto;
     }
