@@ -1,4 +1,16 @@
 services:
+  keycloak:
+    image: quay.io/keycloak/keycloak:22.0.1
+    container_name: keycloak2
+    ports:
+      - "7080:8080"
+    environment:
+      KEYCLOAK_ADMIN: "admin"
+      KEYCLOAK_ADMIN_PASSWORD: "admin"
+    command: "start-dev"
+    extends:
+      file: common-config.yml
+      service: network-deploy-service
   redis:
     image: redis
     ports:
@@ -12,7 +24,7 @@ services:
       service: network-deploy-service
 
   configserver:
-    image: "benkafirongo/configserver:s11"
+    image: "benkafirongo/configserver:s12"
     container_name: configserver-ms
     ports:
       - "8071:8071"
@@ -29,7 +41,7 @@ services:
       OTEL_SERVICE_NAME: "configserver"
 
   gatewayserver:
-    image: "benkafirongo/gatewayserver:s11"
+    image: "benkafirongo/gatewayserver:s12"
     container_name: gatewayserver-ms
     ports:
       - "8072:8072"
@@ -42,6 +54,7 @@ services:
       SPRING_DATA_REDIS_HOST: redis
       SPRING_DATA_REDIS_PORT: 6279
       SPRING_DATA_REDIS_TIMEOUT: 1s
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK-SET-URI: "http://keycloak:8080/realms/master/protocol/openid-connect/certs"
     healthcheck:
       test: "curl --fail --silent localhost:8072/actuator/health/readiness | grep UP || exit 1"
       interval: 20s
@@ -62,7 +75,7 @@ services:
       service: microservice-base-config
 
   eurekaserver:
-    image: "benkafirongo/eurekaserver:s11"
+    image: "benkafirongo/eurekaserver:s12"
     container_name: eurekaserver-ms
     ports:
       - "8070:8070"
@@ -83,7 +96,7 @@ services:
       service: microservice-base-config
 
   accounts:
-    image: "benkafirongo/accounts:s11"
+    image: "benkafirongo/accounts:s12"
     container_name: accounts-ms
     healthcheck:
       test: "curl --fail --silent localhost:8080/actuator/health/readiness | grep UP || exit 1"
@@ -108,7 +121,7 @@ services:
       service: microservice-configserver-config
 
   loans:
-    image: "benkafirongo/loans:s11"
+    image: "benkafirongo/loans:s12"
     container_name: loans-ms
     ports:
       - "8090:8090"
@@ -133,7 +146,7 @@ services:
       service: microservice-configserver-config
 
   cards:
-    image: "benkafirongo/cards:s11"
+    image: "benkafirongo/cards:s12"
     container_name: cards-ms
     ports:
       - "9000:9000"
