@@ -36,7 +36,6 @@ public class SecurityConfig {
     private Converter<Jwt, Mono<AbstractAuthenticationToken>> grantedAuthoritiesExtractor(){
         var jwtAuthenticationConverter = new JwtAuthenticationConverter();
         jwtAuthenticationConverter.setJwtGrantedAuthoritiesConverter(new KeyClockRoleConverter());
-
         return new ReactiveJwtAuthenticationConverterAdapter(jwtAuthenticationConverter);
     }
 }
