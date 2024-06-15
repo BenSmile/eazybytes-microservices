@@ -67,7 +67,7 @@
                 <version>3.4.1</version>
                 <configuration>
                     <to>
-                        <image>benkafirongo/${project.artifactId}:s12</image>
+                        <image>benkafirongo/${project.artifactId}:s13</image>
                     </to>
                 </configuration>
             </plugin>

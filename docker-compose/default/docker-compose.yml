@@ -1,4 +1,24 @@
 services:
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    hostname: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: admin2020
+    healthcheck:
+      test: rabbitmq-diagnostics check_port_connectivity
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+    extends:
+      file: common-config.yml
+      service: network-deploy-service
+
   keycloak:
     image: quay.io/keycloak/keycloak:22.0.1
     container_name: keycloak2
@@ -11,6 +31,7 @@ services:
     extends:
       file: common-config.yml
       service: network-deploy-service
+
   redis:
     image: redis
     ports:
@@ -24,7 +45,7 @@ services:
       service: network-deploy-service
 
   configserver:
-    image: "benkafirongo/configserver:s12"
+    image: "benkafirongo/configserver:s13"
     container_name: configserver-ms
     ports:
       - "8071:8071"
@@ -41,7 +62,7 @@ services:
       OTEL_SERVICE_NAME: "configserver"
 
   gatewayserver:
-    image: "benkafirongo/gatewayserver:s12"
+    image: "benkafirongo/gatewayserver:s13"
     container_name: gatewayserver-ms
     ports:
       - "8072:8072"
@@ -75,7 +96,7 @@ services:
       service: microservice-base-config
 
   eurekaserver:
-    image: "benkafirongo/eurekaserver:s12"
+    image: "benkafirongo/eurekaserver:s13"
     container_name: eurekaserver-ms
     ports:
       - "8070:8070"
@@ -96,7 +117,7 @@ services:
       service: microservice-base-config
 
   accounts:
-    image: "benkafirongo/accounts:s12"
+    image: "benkafirongo/accounts:s13"
     container_name: accounts-ms
     healthcheck:
       test: "curl --fail --silent localhost:8080/actuator/health/readiness | grep UP || exit 1"
@@ -111,7 +132,10 @@ services:
       SPRING_APPLICATION_NAME: "accounts"
       SPRING_CONFIG_IMPORT: configserver:http://configserver:8071/
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eurekaserver:8070/eureka/
+      SPRING_RABBITMQ_HOST: "rabbitmq"
     depends_on:
+      rabbitmq:
+        condition: service_healthy
       configserver:
         condition: service_healthy
       eurekaserver:
@@ -120,8 +144,20 @@ services:
       file: common-config.yml
       service: microservice-configserver-config
 
+  message:
+    image: "benkafirongo/message:s13"
+    container_name: message-ms
+    environment:
+      SPRING_RABBITMQ_HOST: "rabbitmq"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    extends:
+      file: common-config.yml
+      service: network-deploy-service
+
   loans:
-    image: "benkafirongo/loans:s12"
+    image: "benkafirongo/loans:s13"
     container_name: loans-ms
     ports:
       - "8090:8090"
@@ -146,7 +182,7 @@ services:
       service: microservice-configserver-config
 
   cards:
-    image: "benkafirongo/cards:s12"
+    image: "benkafirongo/cards:s13"
     container_name: cards-ms
     ports:
       - "9000:9000"
