@@ -1,20 +1,23 @@
 services:
 
-  rabbitmq:
-    image: rabbitmq:3-management
-    hostname: rabbitmq
+  kafka:
+    image: docker.io/bitnami/kafka:3.7
     ports:
-      - "5672:5672"
-      - "15672:15672"
+      - "9092:9092"
+    volumes:
+      - "kafka_data:/bitnami"
     environment:
-      RABBITMQ_DEFAULT_USER: admin
-      RABBITMQ_DEFAULT_PASS: admin2020
-    healthcheck:
-      test: rabbitmq-diagnostics check_port_connectivity
-      interval: 10s
-      timeout: 5s
-      retries: 10
-      start_period: 5s
+      # KRaft settings
+      - KAFKA_CFG_NODE_ID=0
+      - KAFKA_CFG_PROCESS_ROLES=controller,broker
+      - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=0@kafka:9093
+      # Listeners
+      - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093
+      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://:9092
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
+      - KAFKA_CFG_INTER_BROKER_LISTENER_NAME=PLAINTEXT
+
     extends:
       file: common-config.yml
       service: network-deploy-service
@@ -45,7 +48,7 @@ services:
       service: network-deploy-service
 
   configserver:
-    image: "benkafirongo/configserver:s13"
+    image: "benkafirongo/configserver:s14"
     container_name: configserver-ms
     ports:
       - "8071:8071"
@@ -62,7 +65,7 @@ services:
       OTEL_SERVICE_NAME: "configserver"
 
   gatewayserver:
-    image: "benkafirongo/gatewayserver:s13"
+    image: "benkafirongo/gatewayserver:s14"
     container_name: gatewayserver-ms
     ports:
       - "8072:8072"
@@ -96,7 +99,7 @@ services:
       service: microservice-base-config
 
   eurekaserver:
-    image: "benkafirongo/eurekaserver:s13"
+    image: "benkafirongo/eurekaserver:s14"
     container_name: eurekaserver-ms
     ports:
       - "8070:8070"
@@ -117,7 +120,7 @@ services:
       service: microservice-base-config
 
   accounts:
-    image: "benkafirongo/accounts:s13"
+    image: "benkafirongo/accounts:s14"
     container_name: accounts-ms
     healthcheck:
       test: "curl --fail --silent localhost:8080/actuator/health/readiness | grep UP || exit 1"
@@ -132,10 +135,8 @@ services:
       SPRING_APPLICATION_NAME: "accounts"
       SPRING_CONFIG_IMPORT: configserver:http://configserver:8071/
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eurekaserver:8070/eureka/
-      SPRING_RABBITMQ_HOST: "rabbitmq"
+      SPRING_CLOUD_STREAM_KAFKA_BINDER_BROKERS: "kafka:9092"
     depends_on:
-      rabbitmq:
-        condition: service_healthy
       configserver:
         condition: service_healthy
       eurekaserver:
@@ -145,19 +146,17 @@ services:
       service: microservice-configserver-config
 
   message:
-    image: "benkafirongo/message:s13"
+    image: "benkafirongo/message:s14"
     container_name: message-ms
     environment:
-      SPRING_RABBITMQ_HOST: "rabbitmq"
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
+      SPRING_CLOUD_STREAM_KAFKA_BINDER_BROKERS: "kafka:9092"
+
     extends:
       file: common-config.yml
       service: network-deploy-service
 
   loans:
-    image: "benkafirongo/loans:s13"
+    image: "benkafirongo/loans:s14"
     container_name: loans-ms
     ports:
       - "8090:8090"
@@ -182,7 +181,7 @@ services:
       service: microservice-configserver-config
 
   cards:
-    image: "benkafirongo/cards:s13"
+    image: "benkafirongo/cards:s14"
     container_name: cards-ms
     ports:
       - "9000:9000"
@@ -424,3 +423,7 @@ services:
 networks:
   bensmile:
     driver: "bridge"
+
+volumes:
+  kafka_data:
+    driver: local
